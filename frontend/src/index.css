@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--bg-main);
+  --color-surface: var(--bg-surface);
+  --color-surface-hover: var(--bg-surface-hover);
+  --color-surface-highlight: var(--bg-surface-highlight);
+  
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
+  
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border-color);
+  
+  --color-positive: var(--color-positive);
+  --color-negative: var(--color-negative);
+  --color-warning: var(--color-warning);
+}
+
+:root, .light {
+  /* Light Mode - QuantExa */
+  --bg-main: #F7F9FC;
+  --bg-surface: #FFFFFF;
+  --bg-surface-hover: #F1F5F9;
+  --bg-surface-highlight: #F8FAFC;
+  
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-secondary: #64748B;
+  --color-accent: #3B82F6;
+  
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --border-color: #E2E8F0;
+  
+  --color-positive: #10B981;
+  --color-negative: #EF4444;
+  --color-warning: #F59E0B;
+}
+
+.dark {
+  /* Dark Mode - Premium Financial */
+  --bg-main: #07111F;
+  --bg-surface: #0B1728;
+  --bg-surface-hover: #101E32;
+  --bg-surface-highlight: #172A46;
+  
+  --color-primary: #3B82F6;
+  --color-primary-hover: #60A5FA;
+  --color-secondary: #94A3B8;
+  --color-accent: #38BDF8;
+  
+  --text-main: #F1F5F9;
+  --text-muted: #94A3B8;
+  --border-color: #1E334D;
+  
+  --color-positive: #10B981;
+  --color-negative: #EF4444;
+  --color-warning: #F59E0B;
+}
+
+body {
+  @apply bg-background text-text-main font-sans antialiased selection:bg-primary/30 transition-colors duration-200;
+}
+
+/* Premium Component Primitives */
+.glass-panel {
+  @apply bg-surface border border-border shadow-sm rounded-xl transition-all duration-300;
+}
+
+.glass-panel:hover {
+  @apply shadow-md border-border/80;
+}
+
+.btn-primary {
+  @apply px-6 py-2.5 bg-primary text-white rounded-full font-medium shadow-sm hover:bg-primary-hover transition-colors duration-200 active:scale-95 flex items-center justify-center;
+}
+
+.btn-secondary {
+  @apply px-6 py-2.5 bg-surface hover:bg-surface-hover text-primary border border-border rounded-full font-medium transition-colors duration-200 flex items-center justify-center;
+}
+
+.input-field {
+  @apply w-full px-4 py-2.5 bg-background border border-border rounded-full text-text-main focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all duration-200 text-sm;
+}
+
+.tab-active {
+  @apply text-primary font-semibold border-b-2 border-primary;
+}
+
+.tab-inactive {
+  @apply text-text-muted hover:text-text-main font-medium border-b-2 border-transparent hover:border-border;
+}
+
+/* Custom Scrollbar for dense analytical areas */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-text-muted;
+}
+
+/* Reusable animation utilities */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
