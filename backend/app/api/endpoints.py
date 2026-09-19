@@ -250,7 +250,12 @@ class ResearchRequest(BaseModel):
 
 from ..agent.research import run_research_query
 
+@router.post("/research")
+def research_endpoint(req: ResearchRequest):
+    return run_research_query(req.query, req.assets)
+
 import pandas as pd
+
 
 @router.get("/market-analysis")
 def get_market_analysis(lookback: str = "1Y"):
