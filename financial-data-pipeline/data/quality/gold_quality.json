@@ -1,0 +1,18 @@
+{
+  "asset": "Gold",
+  "symbol": "GOLD",
+  "rows_downloaded": 1690,
+  "rows_after_cleaning": 1690,
+  "rows_rejected": 0,
+  "rows_valid": 1690,
+  "duplicate_rows_removed": 0,
+  "missing_values": {},
+  "negative_price_rows": 0,
+  "invalid_ohlc_records": 0,
+  "duplicate_dates_removed": 0,
+  "first_date": "2020-01-02",
+  "last_date": "2026-09-18",
+  "status": "SUCCESS",
+  "warnings": [],
+  "generated_at": "2026-09-19T11:02:14.756877+00:00"
+}

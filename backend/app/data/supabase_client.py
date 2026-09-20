@@ -17,22 +17,32 @@ else:
     logger.warning("Supabase credentials not found. Ensure SUPABASE_URL and SUPABASE_KEY are set.")
     supabase = None
 
+def normalize_ticker(t: str) -> str:
+    t_clean = str(t).upper().strip()
+    if t_clean in ["BTC-USD", "BTC", "BITCOIN", "BITCOINS"]:
+        return "BTC"
+    if t_clean in ["GC=F", "GOLD", "GOLDFUTURES", "GLD"]:
+        return "GOLD"
+    if t_clean in ["NVDA", "NVIDIA"]:
+        return "NVDA"
+    return t_clean
+
 def get_asset_prices(asset_ticker: str) -> pd.DataFrame:
     """
     Fetches historical prices for an asset from Supabase.
-    We first resolve the asset UUID from the `assets` table based on the ticker (source_dataset),
-    and then fetch the prices from `market_prices`.
+    Resolves ticker aliases (e.g. BTC-USD -> BTC, GC=F -> GOLD).
     """
     if not supabase:
         raise ValueError("Supabase client not initialized")
         
-    # In the schema, the ticker might map to `symbol` or `source_dataset`
-    # Let's search by `source_dataset` which contains things like GC=F
-    res = supabase.table('assets').select('id, symbol, source_dataset').eq('source_dataset', asset_ticker).execute()
+    norm_ticker = normalize_ticker(asset_ticker)
     
+    # Try searching by symbol or source_dataset
+    res = supabase.table('assets').select('id, symbol, source_dataset').eq('symbol', norm_ticker).execute()
     if not res.data:
-        # Fallback to symbol
         res = supabase.table('assets').select('id, symbol, source_dataset').eq('symbol', asset_ticker).execute()
+    if not res.data:
+        res = supabase.table('assets').select('id, symbol, source_dataset').eq('source_dataset', asset_ticker).execute()
         
     if not res.data:
         raise ValueError(f"Asset {asset_ticker} not found in Supabase assets table")
@@ -49,7 +59,6 @@ def get_asset_prices(asset_ticker: str) -> pd.DataFrame:
     df['date'] = pd.to_datetime(df['date'])
     df.set_index('date', inplace=True)
     
-    # Rename columns to match existing convention if needed (e.g. Open, High, Low, Close, Volume)
     rename_map = {
         'open': 'Open',
         'high': 'High',
@@ -58,39 +67,44 @@ def get_asset_prices(asset_ticker: str) -> pd.DataFrame:
         'volume': 'Volume'
     }
     df.rename(columns=rename_map, inplace=True)
-    
     return df
 
 def get_all_assets() -> dict:
     """
-    Fetches all available assets from Supabase and returns them
-    in the format expected by the frontend.
+    Fetches all available assets from Supabase and config settings,
+    providing unified aliases for Bitcoin, Gold, and NVIDIA.
     """
-    if not supabase:
-        # Fallback to local settings if Supabase isn't configured
-        from ..config import settings
-        return {k: v.dict() for k, v in settings.assets.items()}
-        
-    res = supabase.table('assets').select('*').execute()
-    if not res.data:
-        from ..config import settings
-        return {k: v.dict() for k, v in settings.assets.items()}
-        
-    assets_dict = {}
-    for row in res.data:
-        ticker = row['source_dataset'] or row['symbol']
-        name = row['name'] or ticker
-        asset_type = row.get('asset_type', '')
-        # Determine calendar days based on type
-        calendar_days = 365 if str(asset_type).upper() == 'CRYPTOCURRENCY' else 252
-        
-        assets_dict[ticker] = {
-            "ticker": ticker,
-            "name": name,
-            "calendar_days": calendar_days,
-            "asset_class": asset_type
-        }
-        
+    from ..config import settings
+    assets_dict = {k: v.dict() for k, v in settings.assets.items()}
+    
+    if supabase:
+        try:
+            res = supabase.table('assets').select('*').execute()
+            if res.data:
+                for row in res.data:
+                    sym = row.get('symbol') or ''
+                    name = row.get('name') or sym
+                    asset_type = row.get('asset_type', '')
+                    calendar_days = 365 if str(asset_type).upper() == 'CRYPTOCURRENCY' else 252
+                    
+                    if sym:
+                        assets_dict[sym] = {
+                            "ticker": sym,
+                            "name": name,
+                            "calendar_days": calendar_days,
+                            "asset_class": asset_type
+                        }
+                    # Also register common canonical forms
+                    if sym == "BTC":
+                        assets_dict["BTC-USD"] = {"ticker": "BTC-USD", "name": "Bitcoin", "calendar_days": 365, "asset_class": "CRYPTOCURRENCY"}
+                    elif sym == "GOLD":
+                        assets_dict["GC=F"] = {"ticker": "GC=F", "name": "Gold (COMEX)", "calendar_days": 252, "asset_class": "COMMODITY"}
+                        assets_dict["GLD"] = {"ticker": "GLD", "name": "Gold ETF (GLD)", "calendar_days": 252, "asset_class": "COMMODITY"}
+                    elif sym == "NVDA":
+                        assets_dict["NVDA"] = {"ticker": "NVDA", "name": "NVIDIA", "calendar_days": 252, "asset_class": "EQUITY"}
+        except Exception as e:
+            logger.warning(f"Error fetching assets from Supabase: {e}")
+            
     return assets_dict
 
 from typing import List, Dict

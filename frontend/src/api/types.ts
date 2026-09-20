@@ -29,6 +29,43 @@ export interface PricesResponse {
   rebased: number[];
 }
 
+export interface AssetExplorerResponse {
+  batch_id: string;
+  symbol: string;
+  name: string;
+  asset_class: string;
+  profile: {
+    name: string;
+    symbol: string;
+    asset_class: string;
+    data_source: string;
+    last_updated: string;
+    total_observations: number;
+    annualized_return: number;
+    annualized_volatility: number;
+    sharpe_ratio: number;
+    max_drawdown: number;
+  };
+  price_volume: {
+    dates: string[];
+    open: number[];
+    high: number[];
+    low: number[];
+    close: number[];
+    volume: number[];
+  };
+  rolling_returns: {
+    window_days: number;
+    label: string;
+    dates: string[];
+    returns: number[];
+  };
+  drawdown: {
+    dates: string[];
+    drawdown: number[];
+  };
+}
+
 export interface MetricsResponse {
   provenance: DataProvenance;
   cagr: number;
@@ -93,9 +130,114 @@ export interface BacktestRequest {
   risk_free_rate: number;
 }
 
+// ── Layer 4 (Supabase pre-computed results) types ─────────────────────────
+
+export interface Layer4Run {
+  run_id: string;
+  strategy: string;
+  symbol: string;
+  name: string;
+  asset_type: string;
+  parameters: Record<string, number>;
+  initial_capital: number;
+  transaction_cost_rate: number;
+  slippage_rate: number;
+  start_date: string;
+  end_date: string;
+  status: string;
+  metrics: Record<string, number>;
+  // convenience top-level fields
+  total_return: number;
+  annualized_return: number;
+  annualized_volatility: number;
+  sharpe_ratio: number;
+  max_drawdown: number;
+  win_rate: number;
+  n_trades: number;
+  total_transaction_costs: number;
+  final_portfolio_value: number;
+}
+
+export interface Layer4BatchRunsResponse {
+  batch_id: string;
+  runs: Layer4Run[];
+}
+
+export interface Layer4EquityPoint {
+  date: string;
+  portfolio_value: number;
+  daily_return: number;
+  daily_pnl: number;
+  position: number;
+  close_price: number;
+}
+
+export interface Layer4EquityResponse {
+  run_id: string;
+  batch_id: string;
+  strategy: string;
+  symbol: string;
+  equity: Layer4EquityPoint[];
+}
+
+export interface Layer4Trade {
+  signal_date: string;
+  entry_date: string;
+  entry_price: number;
+  exit_date: string | null;
+  exit_price: number | null;
+  units: number;
+  entry_value: number;
+  exit_value: number | null;
+  entry_transaction_cost: number;
+  exit_transaction_cost: number;
+  gross_pnl: number | null;
+  net_pnl: number | null;
+  return_pct: number | null;
+  holding_period_days: number | null;
+  status: string;
+}
+
+export interface Layer4TradesResponse {
+  run_id: string;
+  batch_id: string;
+  strategy: string;
+  symbol: string;
+  trades: Layer4Trade[];
+}
+
+export interface RollingSeriesItem {
+  pair: string;
+  asset_1: string;
+  asset_2: string;
+  window_days: number;
+  dates: string[];
+  correlations: number[];
+  latest_correlation: number | null;
+}
+
+export interface RiskInputItem {
+  symbol: string;
+  name: string;
+  asset_type: string;
+  annualized_volatility: number;
+  sharpe_ratio: number;
+  max_drawdown: number;
+  annualized_return: number;
+}
+
 export interface CorrelationResponse {
+  batch_id?: string;
+  batch_name?: string;
+  data_through?: string | null;
   assets: string[];
   matrix: number[][];
+  window?: string;
+  windows_available?: string[];
+  rolling_series?: RollingSeriesItem[];
+  risk_inputs?: RiskInputItem[];
+  covariance_matrix?: number[][];
+  error?: string;
 }
 
 export interface RegimesResponse {
@@ -169,15 +311,18 @@ export interface ResearchResponse {
     content: string;
   }>;
   conclusion: string;
+  markdown_report?: string;
 }
 
 export interface MarketAnalysisResponse {
-  chart_data: Record<string, { dates: string[], rebased: number[] }>;
+  batch_id?: string;
+  chart_data: Record<string, { dates: string[]; rebased: number[]; name?: string }>;
   breadth: {
     advancing: number;
     declining: number;
     unchanged: number;
     total: number;
+    ad_ratio?: string;
   };
   monitor: Array<{
     symbol: string;
@@ -188,13 +333,21 @@ export interface MarketAnalysisResponse {
     period_return: number;
     volatility: number;
   }>;
-  sector_performance: Record<string, number>;
+  sector_performance?: Record<string, number>;
   kpis: {
     tracked_assets: number;
-    avg_return: number;
-    avg_volatility: number;
-    best_performer: string;
-    worst_performer: string;
+    advancing?: number;
+    declining?: number;
+    unchanged?: number;
+    avg_period_return?: number;
+    avg_return?: number;
+    highest_performer?: string;
+    highest_period_return?: number;
+    lowest_performer?: string;
+    lowest_period_return?: number;
+    best_performer?: string;
+    worst_performer?: string;
     data_through: string;
+    lookback?: string;
   };
 }

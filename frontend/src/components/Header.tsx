@@ -4,7 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 export function Header() {
   const location = useLocation();
-  const { theme, actualTheme, setTheme } = useTheme();
+  const { actualTheme, setTheme } = useTheme();
   
   const toggleTheme = () => {
     setTheme(actualTheme === 'dark' ? 'light' : 'dark');

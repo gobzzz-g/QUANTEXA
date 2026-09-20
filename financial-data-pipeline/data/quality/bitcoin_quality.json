@@ -1,0 +1,18 @@
+{
+  "asset": "Bitcoin",
+  "symbol": "BTC",
+  "rows_downloaded": 2454,
+  "rows_after_cleaning": 2454,
+  "rows_rejected": 0,
+  "rows_valid": 2454,
+  "duplicate_rows_removed": 0,
+  "missing_values": {},
+  "negative_price_rows": 0,
+  "invalid_ohlc_records": 0,
+  "duplicate_dates_removed": 0,
+  "first_date": "2020-01-01",
+  "last_date": "2026-09-19",
+  "status": "SUCCESS",
+  "warnings": [],
+  "generated_at": "2026-09-19T11:02:23.983806+00:00"
+}

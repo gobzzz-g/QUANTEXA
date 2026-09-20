@@ -1,29 +1,63 @@
-import time
-from typing import Dict, Any, List
+"""QuantExa AI Research Integration Hook with OpenClaw.
 
-# A simulated AI orchestrator. 
-# In a real system, this would use LangChain or an LLM to parse the query 
-# and dynamically call functions. Here we mock the result to provide the UI.
+Delegates incoming natural language research queries to OpenClaw AI Research Agent,
+which plans tasks across skills, invokes deterministic QuantExa calculation tools,
+and returns structured research insights.
+"""
 
-def run_research_query(query: str, asset_context: List[str] = None) -> Dict[str, Any]:
-    # Simulate processing time
-    time.sleep(1.5)
-    
-    # Mocked structured response for the AI Research UI
+import sys
+import os
+import logging
+from pathlib import Path
+from typing import Dict, Any, List, Optional
+
+logger = logging.getLogger("quantexa.agent.research")
+
+# Ensure workspace root is on Python path for openclaw package imports
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+try:
+    from openclaw.agent.orchestrator import run_openclaw_research
+    OPENCLAW_AVAILABLE = True
+except Exception as e:
+    logger.warning(f"Could not import OpenClaw orchestrator directly: {e}")
+    OPENCLAW_AVAILABLE = False
+
+
+def run_research_query(query: str, asset_context: Optional[List[str]] = None, batch_id: Optional[str] = None) -> Dict[str, Any]:
+    """Execute AI Research query via OpenClaw Research Agent."""
+    if OPENCLAW_AVAILABLE:
+        try:
+            import importlib
+            import openclaw.agent.orchestrator as orchestrator_mod
+            importlib.reload(orchestrator_mod)
+            return orchestrator_mod.run_openclaw_research(query, asset_context, batch_id=batch_id)
+        except Exception as err:
+            logger.error(f"OpenClaw execution error: {err}", exc_info=True)
+            # Return structured error response preserving UI contract
+            return {
+                "query": query,
+                "assets_analyzed": asset_context or ["BTC-USD", "NVDA"],
+                "orchestration_steps": [
+                    {"step": "OpenClaw Research Agent", "status": "failed", "detail": f"Error during orchestration: {str(err)}"}
+                ],
+                "findings": [
+                    {"category": "Error", "content": f"Failed to complete research execution: {str(err)}"}
+                ],
+                "conclusion": "Unable to formulate a research conclusion due to an upstream tool/API error."
+            }
+
+    # Fallback if OpenClaw module cannot be loaded
     return {
         "query": query,
         "assets_analyzed": asset_context or ["BTC-USD", "NVDA"],
         "orchestration_steps": [
-            {"step": "Data Collection", "status": "success", "detail": "Fetched historical OHLCV from Supabase"},
-            {"step": "Quantitative Analysis", "status": "success", "detail": "Calculated CAGR, Volatility, Sharpe"},
-            {"step": "Strategy Execution", "status": "success", "detail": "Ran baseline SMA crossover"},
-            {"step": "Knowledge Context", "status": "success", "detail": "Resolved entity relationships"},
+            {"step": "OpenClaw Agent Discovery", "status": "failed", "detail": "OpenClaw package not initialized"}
         ],
         "findings": [
-            {"category": "Performance", "content": "Both assets exhibit high annualized returns, but NVDA shows a more stable upward trajectory recently compared to the high cyclical volatility of BTC."},
-            {"category": "Correlation", "content": "Historical correlation is relatively low (0.15), suggesting strong diversification benefits when combined in a portfolio."},
-            {"category": "Risk", "content": "BTC max drawdown (-75%) significantly exceeds NVDA (-50%) over the selected period. Volatility regimes show frequent clustering for BTC."},
-            {"category": "Context", "content": "NVDA belongs to the Semiconductor industry and is heavily influenced by AI trends, while BTC represents the Digital Asset class and acts as a speculative store of value."}
+            {"category": "System", "content": "OpenClaw AI Research Agent is not configured in the active environment."}
         ],
-        "conclusion": "Combining both assets in an optimized portfolio (e.g., Min Volatility or Max Sharpe) significantly improves the risk-adjusted return compared to holding either asset individually."
+        "conclusion": "Please ensure OpenClaw environment is properly configured."
     }

@@ -1,0 +1,18 @@
+{
+  "asset": "NVIDIA",
+  "symbol": "NVDA",
+  "rows_downloaded": 1687,
+  "rows_after_cleaning": 1687,
+  "rows_rejected": 0,
+  "rows_valid": 1687,
+  "duplicate_rows_removed": 0,
+  "missing_values": {},
+  "negative_price_rows": 0,
+  "invalid_ohlc_records": 0,
+  "duplicate_dates_removed": 0,
+  "first_date": "2020-01-02",
+  "last_date": "2026-09-18",
+  "status": "SUCCESS",
+  "warnings": [],
+  "generated_at": "2026-09-19T11:02:34.025643+00:00"
+}
